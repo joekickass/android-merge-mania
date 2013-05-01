@@ -139,7 +139,6 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
             synchronized (surfaceHolder) {
                 canvasWidth = width;
                 canvasHeight = height;
-                reset();
             }
         }
 
@@ -147,17 +146,18 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
             board = new Board(width, height);
             background = new Background(width, height);
             circles = CircleFactory.generateRandomCircles(board, 20);
+            lastTime = System.currentTimeMillis();
         }
 
         // Update game entities for next iteration
         private void updatePhysics() {
+
             long now = System.currentTimeMillis();
-
-            // Make sure we don't update physics unnecessary often
-            if (lastTime > now)
-                return;
-
-            double elapsed = (now - lastTime) / 1000.0;
+            float elapsed = (now - lastTime) / 1000.0f;
+            
+            for (Circle circle : circles) {
+                board.processCircle(circle, elapsed);
+            }
             
             lastTime = now;
         }

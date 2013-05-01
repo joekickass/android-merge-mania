@@ -2,6 +2,7 @@ package se.otaino2.megemania.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -15,25 +16,27 @@ public class CircleFactory {
     public static List<Circle> generateRandomCircles(Board board, int nbrOfCircles) {
         List<Circle> circles = new ArrayList<Circle>();
         for (int i = 0; i < nbrOfCircles; i++) {
-            circles.add(generateRandomCircle(board));
+            Circle circle = generateRandomCircle(board);
+            circle.startMoving();
+            circles.add(circle);
         }
         return circles;
     }
     
     public static Circle generateRandomCircle(Board board) {
-        float x = (float) (Math.random() * board.getWidth());
-        x = x < INITIAL_CIRCLE_RADIUS ? INITIAL_CIRCLE_RADIUS : x;
-        x = x > board.getWidth() - INITIAL_CIRCLE_RADIUS ? board.getWidth() - INITIAL_CIRCLE_RADIUS : x;
-        float y = (float) (Math.random() * board.getHeight());
-        y = y < INITIAL_CIRCLE_RADIUS ? INITIAL_CIRCLE_RADIUS : y;
-        y = y > board.getHeight() - INITIAL_CIRCLE_RADIUS ? board.getHeight() - INITIAL_CIRCLE_RADIUS : y;
+        float x = randomNumber(INITIAL_CIRCLE_RADIUS, board.getWidth()-INITIAL_CIRCLE_RADIUS);
+        float y = randomNumber(INITIAL_CIRCLE_RADIUS, board.getHeight()-INITIAL_CIRCLE_RADIUS);
         Paint paint = new Paint();
         paint.setColor(getRandomColor());
         return new Circle(x, y, INITIAL_CIRCLE_RADIUS, paint);
     }
-    
+
     private static int getRandomColor() {
         int index = (int) (Math.random() * AVAILABLE_CIRCLE_COLORS.length);
         return AVAILABLE_CIRCLE_COLORS[index];
+    }
+    
+    public static float randomNumber(float min, float max) {
+        return min + new Random().nextInt((int)(max - min));
     }
 }

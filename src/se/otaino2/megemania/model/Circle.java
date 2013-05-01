@@ -6,11 +6,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import android.graphics.Paint;
-import android.util.Log;
 
 public class Circle {
     
-    private static final float MAX_SPEED = 200.0f;
+    private static final float MAX_SPEED = 100.0f;
     private static final long MAX_TIME_BETWEEN_SPEED_CHANGES_IN_SECONDS = 240;
     
     private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
@@ -27,15 +26,38 @@ public class Circle {
         this.cy = cy;
         this.radius = radius;
         this.paint = paint;
-        periodicallyChangeSpeed();
     }
     
     public float getCx() {
         return cx;
     }
+    
+    public void setCx(float x) {
+        cx = x;
+    }
 
     public float getCy() {
         return cy;
+    }
+    
+    public void setCy(float y) {
+        cy = y;
+    }
+    
+    public float getVx() {
+        return vx;
+    }
+
+    public void setVx(float vx) {
+        this.vx = vx;
+    }
+
+    public float getVy() {
+        return vy;
+    }
+
+    public void setVy(float vy) {
+        this.vy = vy;
     }
 
     public float getRadius() {
@@ -50,6 +72,10 @@ public class Circle {
         return paint.getColor();
     }
     
+    public void startMoving() {
+        periodicallyChangeSpeed();
+    }
+    
     public void destroy() {
         if (activeTask != null) {
             activeTask.cancel(true);
@@ -60,9 +86,8 @@ public class Circle {
     
     private void periodicallyChangeSpeed() {
         double seed = 2 * Math.PI * Math.random();
-        vx = (float) (MAX_SPEED * Math.cos(seed));
-        vy = (float) (MAX_SPEED * Math.sin(seed));
-        Log.d("BLAH", "New speed: vx=" + vx + ", vy=" + vy);
+        setVx((float) (MAX_SPEED * Math.cos(seed)));
+        setVy((float) (MAX_SPEED * Math.sin(seed)));
         long randomDelay = (long) (Math.random() * MAX_TIME_BETWEEN_SPEED_CHANGES_IN_SECONDS);
         activeTask = executor.schedule(new Runnable() {
             @Override
@@ -70,9 +95,5 @@ public class Circle {
                 periodicallyChangeSpeed();
             }
         }, randomDelay, TimeUnit.SECONDS);
-    }
-    
-    public void updateDirection(Board board) {
-        
     }
 }
