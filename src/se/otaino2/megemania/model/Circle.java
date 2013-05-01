@@ -9,8 +9,8 @@ import android.graphics.Paint;
 
 public class Circle {
     
-    private static final float MAX_SPEED = 100.0f;
-    private static final long MAX_TIME_BETWEEN_SPEED_CHANGES_IN_SECONDS = 240;
+    private static final float MAX_SPEED = 50.0f;
+    private static final long MAX_TIME_BETWEEN_SPEED_CHANGES_IN_SECONDS = 30;
     
     private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> activeTask;
@@ -18,8 +18,8 @@ public class Circle {
     private float cy;
     private float radius;
     private Paint paint;
-    private volatile float vx;
-    private volatile float vy;
+    private float vx;
+    private float vy;
     
     public Circle(float cx, float cy, float radius, Paint paint) {
         this.cx = cx;
@@ -44,19 +44,19 @@ public class Circle {
         cy = y;
     }
     
-    public float getVx() {
+    public synchronized float getVx() {
         return vx;
     }
 
-    public void setVx(float vx) {
+    public synchronized void setVx(float vx) {
         this.vx = vx;
     }
 
-    public float getVy() {
+    public synchronized float getVy() {
         return vy;
     }
 
-    public void setVy(float vy) {
+    public synchronized void setVy(float vy) {
         this.vy = vy;
     }
 
@@ -86,8 +86,10 @@ public class Circle {
     
     private void periodicallyChangeSpeed() {
         double seed = 2 * Math.PI * Math.random();
-        setVx((float) (MAX_SPEED * Math.cos(seed)));
-        setVy((float) (MAX_SPEED * Math.sin(seed)));
+        float newVx = (float) (MAX_SPEED * Math.cos(seed));
+        float newVy = (float) (MAX_SPEED * Math.sin(seed));
+        setVx(newVx);
+        setVy(newVy);
         long randomDelay = (long) (Math.random() * MAX_TIME_BETWEEN_SPEED_CHANGES_IN_SECONDS);
         activeTask = executor.schedule(new Runnable() {
             @Override

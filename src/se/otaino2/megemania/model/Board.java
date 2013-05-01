@@ -1,7 +1,5 @@
 package se.otaino2.megemania.model;
 
-import android.util.Log;
-
 public class Board {
     private int width;
     private int height;
