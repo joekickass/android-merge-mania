@@ -5,7 +5,6 @@ import java.util.List;
 
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.util.Log;
 
 public class CircleFactory {
     
@@ -23,7 +22,11 @@ public class CircleFactory {
     
     public static Circle generateRandomCircle(Board board) {
         float x = (float) (Math.random() * board.getWidth());
+        x = x < INITIAL_CIRCLE_RADIUS ? INITIAL_CIRCLE_RADIUS : x;
+        x = x > board.getWidth() - INITIAL_CIRCLE_RADIUS ? board.getWidth() - INITIAL_CIRCLE_RADIUS : x;
         float y = (float) (Math.random() * board.getHeight());
+        y = y < INITIAL_CIRCLE_RADIUS ? INITIAL_CIRCLE_RADIUS : y;
+        y = y > board.getHeight() - INITIAL_CIRCLE_RADIUS ? board.getHeight() - INITIAL_CIRCLE_RADIUS : y;
         Paint paint = new Paint();
         paint.setColor(getRandomColor());
         return new Circle(x, y, INITIAL_CIRCLE_RADIUS, paint);

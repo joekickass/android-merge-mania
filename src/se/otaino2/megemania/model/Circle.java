@@ -6,11 +6,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import android.graphics.Paint;
+import android.util.Log;
 
 public class Circle {
     
-    private static final float MAX_SPEED = 500.0f;
-    private static final long MAX_TIME_BETWEEN_SPEED_CHANGES_IN_MILLIS = 10000;
+    private static final float MAX_SPEED = 200.0f;
+    private static final long MAX_TIME_BETWEEN_SPEED_CHANGES_IN_SECONDS = 240;
     
     private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> activeTask;
@@ -61,12 +62,17 @@ public class Circle {
         double seed = 2 * Math.PI * Math.random();
         vx = (float) (MAX_SPEED * Math.cos(seed));
         vy = (float) (MAX_SPEED * Math.sin(seed));
-        long randomDelay = (long) seed * MAX_TIME_BETWEEN_SPEED_CHANGES_IN_MILLIS;
+        Log.d("BLAH", "New speed: vx=" + vx + ", vy=" + vy);
+        long randomDelay = (long) (Math.random() * MAX_TIME_BETWEEN_SPEED_CHANGES_IN_SECONDS);
         activeTask = executor.schedule(new Runnable() {
             @Override
             public void run() {
                 periodicallyChangeSpeed();
             }
-        }, randomDelay, TimeUnit.MILLISECONDS);
+        }, randomDelay, TimeUnit.SECONDS);
+    }
+    
+    public void updateDirection(Board board) {
+        
     }
 }
