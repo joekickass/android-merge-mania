@@ -1,6 +1,11 @@
 package se.otaino2.megemania;
 
+import java.util.List;
+
 import se.otaino2.megemania.model.Background;
+import se.otaino2.megemania.model.Board;
+import se.otaino2.megemania.model.Circle;
+import se.otaino2.megemania.model.CircleFactory;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
@@ -81,11 +86,13 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         private boolean running;
         private int canvasWidth;
         private int canvasHeight;
-        private Background background;
         private long lastTime;
         
         // Entities
-        //private List<Entity> gameEntities;
+        private Board board;
+        private Background background;
+        private List<Circle> circles;
+
 
         public GameThread(SurfaceHolder surfaceHolder) {
             this.surfaceHolder = surfaceHolder;
@@ -137,7 +144,9 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         }
 
         private void resetEntities(int width, int height) {
+            board = new Board(width, height);
             background = new Background(width, height);
+            circles = CircleFactory.generateRandomCircles(board, 20);
         }
 
         // Update game entities for next iteration
@@ -156,6 +165,13 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         // Draws game entities on canvas. Must be run in
         private void doDraw(Canvas c) {
             renderBackground(c);
+            renderCircles(c);
+        }
+
+        private void renderCircles(Canvas c) {
+            for (Circle circle : circles) {
+                c.drawCircle(circle.getCx(), circle.getCy(), circle.getRadius(), circle.getPaint());
+            }
         }
 
         // Render the board background.
