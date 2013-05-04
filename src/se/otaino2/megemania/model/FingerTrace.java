@@ -10,7 +10,6 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.Region;
-import android.util.Log;
 
 public class FingerTrace {
 
@@ -47,28 +46,35 @@ public class FingerTrace {
         paint.setStrokeWidth(5);
     }
 
-    public synchronized boolean addPosition(float x, float y) {
-        Log.d("Trace", "id=" + getId() + ", x=" + x + ", y=" + y);
-        if (!isPathIntersectingWithItself(x, y)) {
-            path.lineTo(x, y);
-            PointF point = new PointF(x, y);
-            points.add(point);
-            return true;
+    public synchronized void addPosition(float x, float y) {
+        
+        // No need to add a point that already exist
+        PointF p = points.get(points.size()-1);
+        if (Math.abs(p.x - x) < 1.0 && Math.abs(p.y - y) < 1.0) {
+            return;
         }
-        return false;
+        
+        // Cancel trace if it intersects with itself
+        if (isPathIntersectingWithItself(x, y)) {
+            cancelTrace();
+            return;
+        }
+ 
+        // Add new point
+        path.lineTo(x, y);
+        PointF point = new PointF(x, y);
+        points.add(point);
     }
     
 
-    public synchronized boolean completeTrace() {
+    public synchronized void completeTrace() {
         PointF beginning = points.get(0);
         path.close();
         points.add(beginning);
         isCompleted = true;
         createRegionForContainsCheck();
-        return true;
     }
     public void cancelTrace() {
-        Log.d("Trace", "trace " + getId() + " canceled!");
         isCanceled = true;
     }
 

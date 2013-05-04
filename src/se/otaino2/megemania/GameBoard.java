@@ -84,11 +84,16 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         Log.d(TAG, "Thread's dead, baby. Thread's dead.");
     }
 
+    /**
+     * This is weird. It seems that event.getActionIndex() only returns a valid index for UP and DOWN events. When handling move events, one must instead loop
+     * over available pointer indexes and get their pointer id. Note that indexes may vary between touch events, however event.getActionIndex will always return
+     * the correct pointer index for UP and DOWN events.
+     */
     @Override
     public boolean onTouch(View v, MotionEvent event) {
 
         thread.handleGameState();
-        
+
         int pointerIndex = event.getActionIndex();
         int pointerId = event.getPointerId(pointerIndex);
 
@@ -144,7 +149,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
     }
 
     class GameThread extends Thread {
-        
+
         //
         private static final int NBR_OF_BALLS = 40;
 
@@ -190,31 +195,24 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
             case STATE_PAUSE:
                 unpause();
                 break;
-                
+
             default:
                 break;
             }
         }
 
         public void fingerFound(FingerTrace fingerTrace) {
-            Log.d(TAG, "new finger with id=" + fingerTrace.getId());
             traces.put(fingerTrace.getId(), fingerTrace);
         }
 
         public void fingerLost(int id) {
-            Log.d(TAG, "lost finger with id=" + id);
             FingerTrace trace = traces.get(id);
-            if (!trace.completeTrace()) {
-                trace.cancelTrace();
-            }
-
+            trace.completeTrace();
         }
 
         public void fingerMoved(int id, float x, float y) {
             FingerTrace trace = traces.get(id);
-            if (!trace.addPosition(x, y)) {
-                trace.cancelTrace();
-            }
+            trace.addPosition(x, y);
         }
 
         public void doStart() {
@@ -257,7 +255,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
                 state = mode;
 
                 if (state == STATE_RUNNING) {
-                    
+
                     startTime = getTimeNow();
                     Log.d(TAG, "Starttime=" + startTime);
 
