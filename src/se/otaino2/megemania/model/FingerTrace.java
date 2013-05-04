@@ -121,24 +121,20 @@ public class FingerTrace {
         float newX = 0.0f;
         float newY = 0.0f;
         float newRadius = 0.0f;
-        float newVx = 0.0f;
-        float newVy = 0.0f;
+        float newSpeed = 0.0f;
         Paint paint = encapsulatedCircles.get(0).getPaint();
         for (Circle circle : encapsulatedCircles) {
             newX += circle.getCx();
             newY += circle.getCy();
             newRadius += circle.getRadius();
-            newVx += circle.getVx();
-            newVy += circle.getVy();
+            newSpeed += circle.getSpeed();
             circles.removeCircle(circle);
         }
         newX /= encapsulatedCircles.size();
         newY /= encapsulatedCircles.size();
-        newVx /= newRadius;
-        newVy /= newRadius;
+        newSpeed /= (newRadius / 20);
         Circle fatCircle = new Circle(newX, newY, newRadius, paint);
-        fatCircle.setVx(newVx);
-        fatCircle.setVy(newVy);
+        fatCircle.changeOrigSpeed(newSpeed);
         fatCircle.startMoving();
         circles.addCircle(fatCircle);
     }

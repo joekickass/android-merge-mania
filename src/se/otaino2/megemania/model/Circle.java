@@ -9,7 +9,7 @@ import android.graphics.Paint;
 
 public class Circle {
     
-    private static final float MAX_SPEED = 50.0f;
+    private static final float ORIG_SPEED = 50.0f;
     private static final long MAX_TIME_BETWEEN_SPEED_CHANGES_IN_SECONDS = 30;
     
     private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
@@ -20,12 +20,14 @@ public class Circle {
     private Paint paint;
     private float vx;
     private float vy;
+    private float speed;
     
     public Circle(float cx, float cy, float radius, Paint paint) {
         this.cx = cx;
         this.cy = cy;
         this.radius = radius;
         this.paint = paint;
+        this.speed = ORIG_SPEED;
     }
     
     public float getCx() {
@@ -59,6 +61,10 @@ public class Circle {
     public synchronized void setVy(float vy) {
         this.vy = vy;
     }
+    
+    public void changeOrigSpeed(float speed) {
+        this.speed = speed;
+    }
 
     public float getRadius() {
         return radius;
@@ -81,9 +87,9 @@ public class Circle {
     }
     
     private void periodicallyChangeSpeed() {
-        double seed = 2 * Math.PI * Math.random();
-        float newVx = (float) (MAX_SPEED * Math.cos(seed));
-        float newVy = (float) (MAX_SPEED * Math.sin(seed));
+        float seed = (float) Math.random();
+        float newVx = (float) (speed * seed);
+        float newVy = (float) (speed * (1-seed));
         setVx(newVx);
         setVy(newVy);
         long randomDelay = (long) (Math.random() * MAX_TIME_BETWEEN_SPEED_CHANGES_IN_SECONDS);
@@ -102,5 +108,9 @@ public class Circle {
         } else if (paint.getColor() != other.paint.getColor())
             return false;
         return true;
+    }
+
+    public float getSpeed() {
+        return speed;
     }
 }
