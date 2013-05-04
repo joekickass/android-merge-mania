@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MegeMania</string>
-    <string name="menu_reset">Reset game</string>
+    <string name="app_name">MergeMania</string>
+	<string name="menu_start">Start</string>
+    <string name="menu_stop">Stop</string>
+    <string name="menu_pause">Pause</string>
+    <string name="menu_resume">Resume</string>
+    
+    <string name="mode_ready">Lunar Lander\nPress Up To Play</string>
+	<string name="mode_pause">Paused\nPress Up To Resume</string>
+	<string name="mode_lose">Game Over\nPress Up To Play</string>
+	<string name="mode_win_prefix">Success!\n</string> 
+	<string name="mode_win_suffix">in a row\nPress Up to Play</string> 
+    
+   	<string name="message_stopped">Stopped</string>
+    
 </resources>

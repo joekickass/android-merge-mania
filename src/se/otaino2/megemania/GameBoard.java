@@ -1,5 +1,6 @@
 package se.otaino2.megemania;
 
+import java.util.Collections;
 import java.util.List;
 
 import se.otaino2.megemania.model.Background;
@@ -7,7 +8,11 @@ import se.otaino2.megemania.model.Board;
 import se.otaino2.megemania.model.Circle;
 import se.otaino2.megemania.model.CircleFactory;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -28,25 +33,31 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
         SurfaceHolder holder = getHolder();
         holder.addCallback(this);
+        
+        Handler handler = new Handler();
+        thread = new GameThread(holder, handler, getContext());
 
         // SurfaceView must have focus to get touch events
         setFocusable(true);
         setOnTouchListener(this);
     }
+    
+    @Override
+    public void onWindowFocusChanged(boolean hasWindowFocus) {
+        if (!hasWindowFocus) thread.pause();
+    }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        Log.d(TAG, "Surface created, starting new thread...");
-        thread = new GameThread(holder);
+        Log.d(TAG, "Surface created, starting new thread..");
         thread.setRunning(true);
-        thread.start();
+        thread.start(); // Starting thread, but won't activate until doStart is called...
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.d(TAG, "Surface changed, resetting game...");
+        Log.d(TAG, "Surface changed, updating board size...");
         thread.setSurfaceSize(width, height);
-        thread.reset();
     }
 
     @Override
@@ -80,32 +91,117 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
     }
 
     class GameThread extends Thread {
+        
+        // State constants
+        public static final int STATE_LOSE = 1;
+        public static final int STATE_PAUSE = 2;
+        public static final int STATE_READY = 3;
+        public static final int STATE_RUNNING = 4;
+        public static final int STATE_WIN = 5;
 
-        // Other stuff 
+        // Main objects
         private SurfaceHolder surfaceHolder;
+        private Handler handler;
+        
+        // State and runtime variables
+        private int state;
         private boolean running;
-        private int canvasWidth;
-        private int canvasHeight;
         private long lastTime;
+        private int nbrOfWinsInARow;
         
         // Entities
         private Board board;
         private Background background;
-        private List<Circle> circles;
+        private List<Circle> circles = Collections.emptyList();
+        private Context context;
 
-
-        public GameThread(SurfaceHolder surfaceHolder) {
+        public GameThread(SurfaceHolder surfaceHolder, Handler handler, Context context) {
             this.surfaceHolder = surfaceHolder;
+            this.handler = handler;
+            this.context = context;
+        }
+        
+        public void doStart() {
+            synchronized (surfaceHolder) {
+                resetGame(board);
+                setState(STATE_RUNNING);
+            }
+        }
+        
+        public void doStop() {
+            synchronized (surfaceHolder) {
+                setState(STATE_LOSE, context.getText(R.string.message_stopped));
+            }
+        }
+        
+        public void pause() {
+            synchronized (surfaceHolder) {
+                if (state == STATE_RUNNING) {
+                    setState(STATE_PAUSE);
+                }
+            }
+        }
+        
+        public void unpause() {
+            synchronized (surfaceHolder) {
+                lastTime = System.currentTimeMillis();
+                setState(STATE_RUNNING);
+            }
+        }
+        
+        public void setState(int state) {
+            synchronized (surfaceHolder) {
+                setState(state, null);
+            }
+        }
+        
+        public void setState(int mode, CharSequence message) {
+            synchronized (surfaceHolder) {
+                state = mode;
+
+                if (state == STATE_RUNNING) {
+                    
+                    Message msg = handler.obtainMessage();
+                    Bundle b = new Bundle();
+                    b.putString("text", "");
+                    b.putInt("viz", View.INVISIBLE);
+                    msg.setData(b);
+                    handler.sendMessage(msg);
+                    
+                } else {
+                    
+                    Resources res = context.getResources();
+                    CharSequence str = "";
+                    if (state == STATE_READY) {
+                        str = res.getText(R.string.mode_ready);
+                    } else if (state == STATE_PAUSE) {
+                        str = res.getText(R.string.mode_pause);
+                    } else if (state == STATE_LOSE) {
+                        str = res.getText(R.string.mode_lose);
+                    } else if (state == STATE_WIN) {
+                        str = res.getString(R.string.mode_win_prefix) + nbrOfWinsInARow + " " + res.getString(R.string.mode_win_suffix);
+                    }
+
+                    if (message != null) {
+                        str = message + "\n" + str;
+                    }
+
+                    if (state == STATE_LOSE) {
+                        nbrOfWinsInARow = 0;
+                    }
+
+                    Message msg = handler.obtainMessage();
+                    Bundle b = new Bundle();
+                    b.putString("text", str.toString());
+                    b.putInt("viz", View.VISIBLE);
+                    msg.setData(b);
+                    handler.sendMessage(msg);
+                }
+            }
         }
 
         public void setRunning(boolean running) {
             this.running = running;
-        }
-
-        public void reset() {
-            synchronized (surfaceHolder) {
-                resetEntities(canvasWidth, canvasHeight);               
-            }
         }
 
         @Override
@@ -137,14 +233,16 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
         public void setSurfaceSize(int width, int height) {
             synchronized (surfaceHolder) {
-                canvasWidth = width;
-                canvasHeight = height;
+                resetBoard(width, height);
             }
         }
 
-        private void resetEntities(int width, int height) {
+        private void resetBoard(int width, int height) {
             board = new Board(width, height);
             background = new Background(width, height);
+        }
+        
+        private void resetGame(Board board) {
             circles = CircleFactory.generateRandomCircles(board, 20);
             lastTime = System.currentTimeMillis();
         }
@@ -155,8 +253,10 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
             long now = System.currentTimeMillis();
             float elapsed = (now - lastTime) / 1000.0f;
             
-            for (Circle circle : circles) {
-                board.processCircle(circle, elapsed);
+            if (state == STATE_RUNNING) {
+                for (Circle circle : circles) {
+                    board.processCircle(circle, elapsed);
+                }
             }
             
             lastTime = now;
