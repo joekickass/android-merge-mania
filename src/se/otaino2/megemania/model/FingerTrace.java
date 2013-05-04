@@ -10,6 +10,7 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.Region;
+import android.util.Log;
 
 public class FingerTrace {
 
@@ -47,6 +48,7 @@ public class FingerTrace {
     }
 
     public synchronized boolean addPosition(float x, float y) {
+        Log.d("Trace", "id=" + getId() + ", x=" + x + ", y=" + y);
         if (!isPathIntersectingWithItself(x, y)) {
             path.lineTo(x, y);
             PointF point = new PointF(x, y);
@@ -66,6 +68,7 @@ public class FingerTrace {
         return true;
     }
     public void cancelTrace() {
+        Log.d("Trace", "trace " + getId() + " canceled!");
         isCanceled = true;
     }
 

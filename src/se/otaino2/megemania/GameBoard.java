@@ -88,32 +88,30 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
     public boolean onTouch(View v, MotionEvent event) {
 
         thread.handleGameState();
+        
+        int pointerIndex = event.getActionIndex();
+        int pointerId = event.getPointerId(pointerIndex);
 
-        for (int i = 0; i < event.getPointerCount(); i++) {
+        switch (event.getActionMasked()) {
+        case MotionEvent.ACTION_DOWN:
+        case MotionEvent.ACTION_POINTER_DOWN:
+            FingerTrace trace = new FingerTrace(pointerId, event.getX(pointerIndex), event.getY(pointerIndex));
+            thread.fingerFound(trace);
+            break;
 
-            int id = event.getPointerId(i);
+        case MotionEvent.ACTION_UP:
+        case MotionEvent.ACTION_POINTER_UP:
+            thread.fingerLost(pointerId);
+            return false;
 
-            Log.d(TAG, "i=" + i);
-            Log.d(TAG, "id=" + id);
-
-            if (event.getActionIndex() == i
-                    && (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN || event.getActionMasked() == MotionEvent.ACTION_DOWN)) {
-
-                FingerTrace trace = new FingerTrace(id, event.getX(i), event.getY(i));
-                thread.fingerFound(trace);
-
-            } else if (event.getActionIndex() == i
-                    && (event.getActionMasked() == MotionEvent.ACTION_POINTER_UP || event.getActionMasked() == MotionEvent.ACTION_UP
-                            || event.getActionMasked() == MotionEvent.ACTION_OUTSIDE || event.getActionMasked() == MotionEvent.ACTION_CANCEL)) {
-
-                // Ongoing trace ended
-                thread.fingerLost(id);
-
-            } else {
-
-                // Finger moved in ongoing trace
-                thread.fingerMoved(id, event.getX(i), event.getY(i));
+        case MotionEvent.ACTION_MOVE:
+            for (int i = 0; i < event.getPointerCount(); i++) {
+                pointerId = event.getPointerId(i);
+                thread.fingerMoved(pointerId, event.getX(i), event.getY(i));
             }
+            break;
+        case MotionEvent.ACTION_CANCEL:
+            break;
         }
         return true;
     }
@@ -199,10 +197,12 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         }
 
         public void fingerFound(FingerTrace fingerTrace) {
+            Log.d(TAG, "new finger with id=" + fingerTrace.getId());
             traces.put(fingerTrace.getId(), fingerTrace);
         }
 
         public void fingerLost(int id) {
+            Log.d(TAG, "lost finger with id=" + id);
             FingerTrace trace = traces.get(id);
             if (!trace.completeTrace()) {
                 trace.cancelTrace();
@@ -403,8 +403,8 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
         private void renderFingers(Canvas c) {
             if (traces != null) {
-                for (FingerTrace trace : traces.values()) {
-                    trace.drawPositions(c);
+                for (int id : traces.keySet()) {
+                    traces.get(id).drawPositions(c);
                 }
             }
         }
