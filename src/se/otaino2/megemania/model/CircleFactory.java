@@ -1,7 +1,5 @@
 package se.otaino2.megemania.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 import android.graphics.Color;
@@ -13,12 +11,12 @@ public class CircleFactory {
     
     private static final int[] AVAILABLE_CIRCLE_COLORS = {Color.BLUE, Color.GREEN, Color.RED, Color.YELLOW, Color.MAGENTA, Color.CYAN};
     
-    public static List<Circle> generateRandomCircles(Board board, int nbrOfCircles) {
-        List<Circle> circles = new ArrayList<Circle>();
+    public static Circles generateRandomCircles(Board board, int nbrOfCircles) {
+        Circles circles = new Circles();
         for (int i = 0; i < nbrOfCircles; i++) {
             Circle circle = generateRandomCircle(board);
             circle.startMoving();
-            circles.add(circle);
+            circles.addCircle(circle);
         }
         return circles;
     }

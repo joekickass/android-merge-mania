@@ -3,15 +3,12 @@ package se.otaino2.megemania;
 import se.otaino2.megemania.GameBoard.GameThread;
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
 public class MergeManiaActivity extends Activity {
 
-    private static final String TAG = "MergeManiaActivity";
-    
     private GameBoard board;
 
     @Override
@@ -31,7 +28,6 @@ public class MergeManiaActivity extends Activity {
      */
     @Override
     protected void onPause() {
-        Log.d(TAG, "onPause");
         super.onPause();
         board.getThread().pause();
     }

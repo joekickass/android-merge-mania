@@ -1,9 +1,7 @@
 package se.otaino2.megemania;
 
 import java.lang.ref.WeakReference;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,6 +9,7 @@ import se.otaino2.megemania.model.Background;
 import se.otaino2.megemania.model.Board;
 import se.otaino2.megemania.model.Circle;
 import se.otaino2.megemania.model.CircleFactory;
+import se.otaino2.megemania.model.Circles;
 import se.otaino2.megemania.model.FingerTrace;
 import android.content.Context;
 import android.content.res.Resources;
@@ -58,7 +57,6 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        Log.d(TAG, "Surface created! Starting thread...");
         if (thread.getState() == Thread.State.TERMINATED) {
             Log.d(TAG, "Had to create a new thread, old one was terminated!");
             thread = new GameThread(holder, getContext(), new LabelHandler(labelView));
@@ -70,13 +68,11 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.d(TAG, "Surface changed, updating board size...");
         thread.setSurfaceSize(width, height);
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        Log.d(TAG, "Surface destroyed, trying to shut down thread...");
         boolean retry = true;
         thread.setRunning(false);
         while (retry) {
@@ -98,7 +94,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
             if (event.getActionIndex() == i
                     && (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN || event.getActionMasked() == MotionEvent.ACTION_DOWN)) {
 
-                Log.d(TAG, "New finger detected! " + id + ", pos=" + event.getX(id) + ", " + event.getY(id));
+                // New trace detected
                 FingerTrace trace = new FingerTrace(id, event.getX(id), event.getY(id));
                 thread.fingerFound(trace);
 
@@ -106,12 +102,12 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
                     && (event.getActionMasked() == MotionEvent.ACTION_POINTER_UP || event.getActionMasked() == MotionEvent.ACTION_UP
                             || event.getActionMasked() == MotionEvent.ACTION_OUTSIDE || event.getActionMasked() == MotionEvent.ACTION_CANCEL)) {
 
-                Log.d(TAG, "Finger lost! " + id + ", pos=" + event.getX(id) + ", " + event.getY(id));
+                // Ongoing trace ended
                 thread.fingerLost(id);
 
             } else {
 
-                Log.d(TAG, "Any of the existing fingers moving around! " + id + ", pos=" + event.getX(id) + ", " + event.getY(id));
+                // Finger moved in ongoing trace
                 thread.fingerMoved(id, event.getX(id), event.getY(id));
             }
         }
@@ -137,10 +133,8 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
         @Override
         public void handleMessage(Message msg) {
-            Log.d("Handler", "Received message");
             TextView label = labelRef.get();
             if (label != null) {
-                Log.d("Handler", "Setting message: " + msg.getData().getString("text"));
                 label.setVisibility(msg.getData().getInt("viz"));
                 label.setText(msg.getData().getString("text"));
             }
@@ -170,7 +164,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         // Entities
         private Board board;
         private Background background;
-        private List<Circle> circles;
+        private Circles circles;
         private Map<Integer, FingerTrace> traces;
 
         public GameThread(SurfaceHolder surfaceHolder, Context context, Handler handler) {
@@ -325,7 +319,9 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         }
 
         private void clearGame() {
-            circles = Collections.emptyList();
+            if (circles != null) {
+                circles.clear();
+            }
         }
 
         // Update game entities for next iteration
@@ -335,9 +331,15 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
             float elapsed = (now - lastTime) / 1000.0f;
 
             if (state == STATE_RUNNING) {
-                for (Circle circle : circles) {
-                    board.processCircle(circle, elapsed);
+                
+                // Update every circle with new position and speed
+                if (circles != null) {
+                    for (Circle circle : circles.get()) {
+                        board.processCircle(circle, elapsed);
+                    }
                 }
+                
+                // Check if a trace was completed and if any circles were caught within
                 Iterator<FingerTrace> iter = traces.values().iterator();
                 while(iter.hasNext()) {
                     FingerTrace trace = iter.next();
@@ -345,6 +347,11 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
                         trace.evaluateTrace(circles);
                         traces.remove(trace.getId());
                     }
+                }
+                
+                // Check if game should end
+                if (board.isGameFinished(circles)) {
+                    setState(STATE_WIN);
                 }
             }
 
@@ -358,14 +365,18 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         }
         
         private void renderFingers(Canvas c) {
-            for(FingerTrace trace : traces.values()) {
-                trace.drawPositions(c);
+            if (traces != null) {
+                for(FingerTrace trace : traces.values()) {
+                    trace.drawPositions(c);
+                }
             }
         }
 
         private void renderCircles(Canvas c) {
-            for (Circle circle : circles) {
-                c.drawCircle(circle.getCx(), circle.getCy(), circle.getRadius(), circle.getPaint());
+            if (circles != null) {
+                for (Circle circle : circles.get()) {
+                    c.drawCircle(circle.getCx(), circle.getCy(), circle.getRadius(), circle.getPaint());
+                }
             }
         }
 

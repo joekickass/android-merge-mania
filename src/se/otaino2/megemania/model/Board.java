@@ -47,4 +47,13 @@ public class Board {
             circle.setCy(newY);
         }
     }
+
+    public boolean isGameFinished(Circles circles) {
+        for (Integer type : circles.getTypes()) {
+            if (circles.getTypeCount(type) == 1) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

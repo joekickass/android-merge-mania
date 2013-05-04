@@ -9,7 +9,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Region;
-import android.util.Log;
 
 public class FingerTrace {
     
@@ -55,12 +54,12 @@ public class FingerTrace {
         region.setPath(path, new Region((int) rectF.left, (int) rectF.top, (int) rectF.right, (int) rectF.bottom));
     }
 
-    public void evaluateTrace(List<Circle> circles) {
+    public void evaluateTrace(Circles circles) {
         
         List<Circle> encapsulatedCircles = new ArrayList<Circle>();
         
         // Find all circles of the same type within path
-        for (Circle circle : circles) {
+        for (Circle circle : circles.get()) {
             if(region.contains( (int) circle.getCx(), (int) circle.getCy() )) {
                 if (!encapsulatedCircles.isEmpty()) {
                     if (!encapsulatedCircles.get(0).isSame(circle)) {
@@ -88,7 +87,7 @@ public class FingerTrace {
             newRadius += circle.getRadius();
             newVx += circle.getVx();
             newVy += circle.getVy();
-            circles.remove(circle);
+            circles.removeCircle(circle);
         }
         newX /= encapsulatedCircles.size();
         newY /= encapsulatedCircles.size();
@@ -98,9 +97,7 @@ public class FingerTrace {
         fatCircle.setVx(newVx);
         fatCircle.setVy(newVy);
         fatCircle.startMoving();
-        circles.add(fatCircle);
-        
-        Log.d("BAL", "Caught " + encapsulatedCircles.size() + " circles!");
+        circles.addCircle(fatCircle);
     }
 
     public int getId() {
