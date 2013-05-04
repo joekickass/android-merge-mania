@@ -185,7 +185,9 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
         public void fingerMoved(int id, float x, float y) {
             FingerTrace trace = traces.get(id);
-            trace.addPosition(x, y);
+            if (!trace.addPosition(x, y)) {
+                trace.cancelTrace();
+            }
         }
 
         public void doStart() {
