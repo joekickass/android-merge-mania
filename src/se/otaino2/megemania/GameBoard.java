@@ -1,5 +1,6 @@
 package se.otaino2.megemania;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.widget.TextView;
 
 public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, OnTouchListener {
 
@@ -27,15 +29,14 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
     // Render thread
     private GameThread thread;
-    
+
     public GameBoard(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         SurfaceHolder holder = getHolder();
         holder.addCallback(this);
         
-        Handler handler = new Handler();
-        thread = new GameThread(holder, handler, getContext());
+        thread = new GameThread(holder, getContext());
 
         // SurfaceView must have focus to get touch events
         setFocusable(true);
@@ -50,6 +51,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         Log.d(TAG, "Surface created, starting new thread..");
+        thread.clearGame();
         thread.setRunning(true);
         thread.start(); // Starting thread, but won't activate until doStart is called...
     }
@@ -89,6 +91,31 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
     public GameThread getThread() {
         return thread;
     }
+    
+    public void setTextView(TextView statusLabel) {
+        thread.setHandler(new LabelHandler(statusLabel));
+    }
+    
+    // Static handler with a weak reference to the textview
+    static class LabelHandler extends Handler {
+        
+        private final WeakReference<TextView> labelRef;
+        
+        public LabelHandler(TextView statusLabel) {
+            this.labelRef = new WeakReference<TextView>(statusLabel);
+        }
+        
+        @Override
+        public void handleMessage(Message msg) {
+            Log.d("Handler", "Received message");
+            TextView label = labelRef.get();
+             if (label != null) {
+                 Log.d("Handler", "Setting message: " + msg.getData().getString("text"));
+                 label.setVisibility(msg.getData().getInt("viz"));
+                 label.setText(msg.getData().getString("text"));
+             }
+        }
+    }
 
     class GameThread extends Thread {
         
@@ -112,13 +139,16 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         // Entities
         private Board board;
         private Background background;
-        private List<Circle> circles = Collections.emptyList();
+        private List<Circle> circles;
         private Context context;
 
-        public GameThread(SurfaceHolder surfaceHolder, Handler handler, Context context) {
+        public GameThread(SurfaceHolder surfaceHolder, Context context) {
             this.surfaceHolder = surfaceHolder;
-            this.handler = handler;
             this.context = context;
+        }
+        
+        public void setHandler(Handler handler) {
+            this.handler = handler;
         }
         
         public void doStart() {
@@ -130,6 +160,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         
         public void doStop() {
             synchronized (surfaceHolder) {
+                clearGame();
                 setState(STATE_LOSE, context.getText(R.string.message_stopped));
             }
         }
@@ -245,6 +276,10 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         private void resetGame(Board board) {
             circles = CircleFactory.generateRandomCircles(board, 20);
             lastTime = System.currentTimeMillis();
+        }
+        
+        private void clearGame() {
+            circles = Collections.emptyList();
         }
 
         // Update game entities for next iteration

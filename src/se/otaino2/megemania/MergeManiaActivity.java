@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 public class MergeManiaActivity extends Activity {
 
@@ -15,6 +16,8 @@ public class MergeManiaActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_merge_mania);
         board = (GameBoard) findViewById(R.id.gameboard);
+        
+        board.setTextView((TextView) findViewById(R.id.label));
         
         if (savedInstanceState == null) {
             // we were just launched: set up a new game
