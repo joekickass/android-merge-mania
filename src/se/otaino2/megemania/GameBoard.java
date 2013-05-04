@@ -29,14 +29,17 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
     // Render thread
     private GameThread thread;
-
+    
+    // Status label
+    private TextView labelView;
+    
     public GameBoard(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         SurfaceHolder holder = getHolder();
         holder.addCallback(this);
         
-        thread = new GameThread(holder, getContext());
+        thread = new GameThread(holder, getContext(), new LabelHandler(labelView));
 
         // SurfaceView must have focus to get touch events
         setFocusable(true);
@@ -50,8 +53,12 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        Log.d(TAG, "Surface created, starting new thread..");
-        thread.clearGame();
+        Log.d(TAG, "Surface created! Starting thread...");
+        if (thread.getState() == Thread.State.TERMINATED) {
+            Log.d(TAG, "Had to create a new thread, old one was terminated!");
+            thread = new GameThread(holder, getContext(), new LabelHandler(labelView));
+            thread.setState(GameThread.STATE_READY);
+        }
         thread.setRunning(true);
         thread.start(); // Starting thread, but won't activate until doStart is called...
     }
@@ -93,7 +100,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
     }
     
     public void setTextView(TextView statusLabel) {
-        thread.setHandler(new LabelHandler(statusLabel));
+        labelView = statusLabel;
     }
     
     // Static handler with a weak reference to the textview
@@ -125,7 +132,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         public static final int STATE_READY = 3;
         public static final int STATE_RUNNING = 4;
         public static final int STATE_WIN = 5;
-
+        
         // Main objects
         private SurfaceHolder surfaceHolder;
         private Handler handler;
@@ -142,12 +149,9 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         private List<Circle> circles;
         private Context context;
 
-        public GameThread(SurfaceHolder surfaceHolder, Context context) {
+        public GameThread(SurfaceHolder surfaceHolder, Context context, Handler handler) {
             this.surfaceHolder = surfaceHolder;
             this.context = context;
-        }
-        
-        public void setHandler(Handler handler) {
             this.handler = handler;
         }
         
@@ -217,7 +221,10 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
                         str = message + "\n" + str;
                     }
 
-                    if (state == STATE_LOSE) {
+                    // Handle special state actions
+                    if (state == STATE_READY) {
+                        thread.clearGame();
+                    } else if (state == STATE_LOSE) {
                         nbrOfWinsInARow = 0;
                     }
 

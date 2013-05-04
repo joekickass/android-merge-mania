@@ -6,8 +6,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import android.graphics.Paint;
+import android.os.Parcel;
+import android.os.Parcelable;
 
-public class Circle {
+public class Circle implements Parcelable {
     
     private static final float MAX_SPEED = 50.0f;
     private static final long MAX_TIME_BETWEEN_SPEED_CHANGES_IN_SECONDS = 30;
@@ -97,5 +99,14 @@ public class Circle {
                 periodicallyChangeSpeed();
             }
         }, randomDelay, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
     }
 }
