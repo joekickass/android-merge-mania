@@ -6,10 +6,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import android.graphics.Paint;
-import android.os.Parcel;
-import android.os.Parcelable;
 
-public class Circle implements Parcelable {
+public class Circle {
     
     private static final float MAX_SPEED = 50.0f;
     private static final long MAX_TIME_BETWEEN_SPEED_CHANGES_IN_SECONDS = 30;
@@ -70,10 +68,6 @@ public class Circle implements Parcelable {
         return paint;
     }
     
-    public int getType() {
-        return paint.getColor();
-    }
-    
     public void startMoving() {
         periodicallyChangeSpeed();
     }
@@ -101,12 +95,12 @@ public class Circle implements Parcelable {
         }, randomDelay, TimeUnit.SECONDS);
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
+    public boolean isSame(Circle other) {
+        if (paint == null) {
+            if (other.paint != null)
+                return false;
+        } else if (paint.getColor() != other.paint.getColor())
+            return false;
+        return true;
     }
 }
