@@ -55,6 +55,19 @@ public class FingerTrace {
         }
         return false;
     }
+    
+
+    public synchronized boolean completeTrace() {
+        PointF beginning = points.get(0);
+        path.close();
+        points.add(beginning);
+        isCompleted = true;
+        createRegionForContainsCheck();
+        return true;
+    }
+    public void cancelTrace() {
+        isCanceled = true;
+    }
 
     private boolean isPathIntersectingWithItself(float x, float y) {
 
@@ -75,18 +88,6 @@ public class FingerTrace {
         }
 
         return false;
-    }
-
-    public synchronized void completeTrace() {
-        path.close();
-        points.add(points.get(0));
-        isCompleted = true;
-        createRegionForContainsCheck();
-    }
-    
-
-    public void cancelTrace() {
-        isCanceled = true;
     }
 
     private void createRegionForContainsCheck() {

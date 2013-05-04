@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MergeMania</string>
-	<string name="menu_start">Start</string>
-    <string name="menu_stop">Stop</string>
-    <string name="menu_pause">Pause</string>
-    <string name="menu_resume">Resume</string>
+    
+    <string name="start_game">Start new game</string>
+    <string name="resume">Done!</string>
+    <string name="highscore">Highscore</string>
+    <string name="highscore_prefix">Finished game in</string>
+    <string name="highscore_postfix">seconds</string>
+    <string name="your_score">Your score was </string>
     
     <string name="mode_ready">MergeMania\nTouch to play</string>
 	<string name="mode_pause">Paused\nTouch to resume</string>
 	<string name="mode_lose">Game Over\nTouch to play</string>
-	<string name="mode_win_prefix">Success!\n</string> 
-	<string name="mode_win_suffix">in a row\nTouch to play</string> 
+	<string name="mode_win">Success!</string> 
     
    	<string name="message_stopped">Stopped</string>
     

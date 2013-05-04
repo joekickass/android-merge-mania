@@ -12,6 +12,7 @@ import se.otaino2.megemania.model.CircleFactory;
 import se.otaino2.megemania.model.Circles;
 import se.otaino2.megemania.model.FingerTrace;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.os.Bundle;
@@ -57,11 +58,8 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        if (thread.getState() == Thread.State.TERMINATED) {
-            Log.d(TAG, "Had to create a new thread, old one was terminated!");
-            thread = new GameThread(holder, getContext(), new LabelHandler(labelView));
-            thread.setState(GameThread.STATE_READY);
-        }
+        thread = new GameThread(holder, getContext(), new LabelHandler(labelView));
+        thread.setState(GameThread.STATE_READY);
         thread.setRunning(true);
         thread.start(); // Starting thread, but won't activate until doStart is called...
     }
@@ -88,14 +86,20 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+
+        thread.handleGameState();
+
         for (int i = 0; i < event.getPointerCount(); i++) {
 
             int id = event.getPointerId(i);
+
+            Log.d(TAG, "i=" + i);
+            Log.d(TAG, "id=" + id);
+
             if (event.getActionIndex() == i
                     && (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN || event.getActionMasked() == MotionEvent.ACTION_DOWN)) {
 
-                // New trace detected
-                FingerTrace trace = new FingerTrace(id, event.getX(id), event.getY(id));
+                FingerTrace trace = new FingerTrace(id, event.getX(i), event.getY(i));
                 thread.fingerFound(trace);
 
             } else if (event.getActionIndex() == i
@@ -108,7 +112,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
             } else {
 
                 // Finger moved in ongoing trace
-                thread.fingerMoved(id, event.getX(id), event.getY(id));
+                thread.fingerMoved(id, event.getX(i), event.getY(i));
             }
         }
         return true;
@@ -159,7 +163,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         private int state;
         private boolean running;
         private long lastTime;
-        private int nbrOfWinsInARow;
+        private int startTime;
 
         // Entities
         private Board board;
@@ -174,13 +178,33 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
             this.traces = new ConcurrentHashMap<Integer, FingerTrace>();
         }
 
+        public void handleGameState() {
+
+            switch (state) {
+
+            case STATE_READY:
+                doStart();
+                break;
+
+            case STATE_PAUSE:
+                unpause();
+                break;
+                
+            default:
+                break;
+            }
+        }
+
         public void fingerFound(FingerTrace fingerTrace) {
             traces.put(fingerTrace.getId(), fingerTrace);
         }
 
         public void fingerLost(int id) {
             FingerTrace trace = traces.get(id);
-            trace.completeTrace();
+            if (!trace.completeTrace()) {
+                trace.cancelTrace();
+            }
+
         }
 
         public void fingerMoved(int id, float x, float y) {
@@ -230,6 +254,9 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
                 state = mode;
 
                 if (state == STATE_RUNNING) {
+                    
+                    startTime = getTimeNow();
+                    Log.d(TAG, "Starttime=" + startTime);
 
                     Message msg = handler.obtainMessage();
                     Bundle b = new Bundle();
@@ -249,7 +276,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
                     } else if (state == STATE_LOSE) {
                         str = res.getText(R.string.mode_lose);
                     } else if (state == STATE_WIN) {
-                        str = res.getString(R.string.mode_win_prefix) + nbrOfWinsInARow + " " + res.getString(R.string.mode_win_suffix);
+                        str = res.getString(R.string.mode_win);
                     }
 
                     if (message != null) {
@@ -257,10 +284,11 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
                     }
 
                     // Handle special state actions
-                    if (state == STATE_READY) {
-                        thread.clearGame();
-                    } else if (state == STATE_LOSE) {
-                        nbrOfWinsInARow = 0;
+                    if (state == STATE_WIN) {
+                        int finishTime = getTimeNow() - startTime;
+                        Intent intent = new Intent(context, HighscorePage.class);
+                        intent.putExtra(HighscorePage.FINISH_TIME, finishTime);
+                        context.startActivity(intent);
                     }
 
                     Message msg = handler.obtainMessage();
@@ -271,6 +299,10 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
                     handler.sendMessage(msg);
                 }
             }
+        }
+
+        private int getTimeNow() {
+            return (int) (System.currentTimeMillis() / 1000);
         }
 
         public void setRunning(boolean running) {
@@ -333,24 +365,24 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
             float elapsed = (now - lastTime) / 1000.0f;
 
             if (state == STATE_RUNNING) {
-                
+
                 // Update every circle with new position and speed
                 if (circles != null) {
                     for (Circle circle : circles.get()) {
                         board.processCircle(circle, elapsed);
                     }
                 }
-                
+
                 // Check if a trace was completed and if any circles were caught within
                 Iterator<FingerTrace> iter = traces.values().iterator();
-                while(iter.hasNext()) {
+                while (iter.hasNext()) {
                     FingerTrace trace = iter.next();
                     if (trace.isCompleted()) {
                         trace.evaluateTrace(circles);
                         traces.remove(trace.getId());
                     }
                 }
-                
+
                 // Check if game should end
                 if (board.isGameFinished(circles)) {
                     setState(STATE_WIN);
@@ -365,10 +397,10 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
             renderCircles(c);
             renderFingers(c);
         }
-        
+
         private void renderFingers(Canvas c) {
             if (traces != null) {
-                for(FingerTrace trace : traces.values()) {
+                for (FingerTrace trace : traces.values()) {
                     trace.drawPositions(c);
                 }
             }
