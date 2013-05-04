@@ -146,6 +146,9 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
     }
 
     class GameThread extends Thread {
+        
+        //
+        private static final int NBR_OF_BALLS = 40;
 
         // State constants
         public static final int STATE_LOSE = 1;
@@ -348,7 +351,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         }
 
         private void resetGame(Board board) {
-            circles = CircleFactory.generateRandomCircles(board, 20);
+            circles = CircleFactory.generateRandomCircles(board, NBR_OF_BALLS);
             lastTime = System.currentTimeMillis();
         }
 

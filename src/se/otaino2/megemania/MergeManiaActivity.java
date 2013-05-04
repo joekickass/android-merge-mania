@@ -17,9 +17,6 @@ public class MergeManiaActivity extends Activity {
         board.setTextView((TextView) findViewById(R.id.label));
     }
     
-    /**
-     * Invoked when the Activity loses user focus.
-     */
     @Override
     protected void onPause() {
         super.onPause();
