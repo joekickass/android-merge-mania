@@ -4,6 +4,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 
+/**
+ * A simple domain object representing the background
+ * 
+ * @author otaino-2
+ *
+ */
 public class Background {
     private Rect rect;
     private Paint paint;

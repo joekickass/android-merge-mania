@@ -11,6 +11,13 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.Region;
 
+/**
+ * The FingerTrace class keeps track of all points belonging to a finger trace. It can decide if the current trace should be cancelled because it intersects
+ * with itself. It also decides if any of the circles are contained within its path, and if so, if they are of the same type.
+ * 
+ * @author otaino-2
+ * 
+ */
 public class FingerTrace {
 
     private int id;
@@ -22,7 +29,7 @@ public class FingerTrace {
     private Paint paint;
 
     private boolean isCompleted = false;
-    
+
     private boolean isCanceled = false;
 
     private Region region;
@@ -47,25 +54,24 @@ public class FingerTrace {
     }
 
     public synchronized void addPosition(float x, float y) {
-        
+
         // No need to add a point that already exist
-        PointF p = points.get(points.size()-1);
+        PointF p = points.get(points.size() - 1);
         if (Math.abs(p.x - x) < 1.0 && Math.abs(p.y - y) < 1.0) {
             return;
         }
-        
+
         // Cancel trace if it intersects with itself
         if (isPathIntersectingWithItself(x, y)) {
             cancelTrace();
             return;
         }
- 
+
         // Add new point
         path.lineTo(x, y);
         PointF point = new PointF(x, y);
         points.add(point);
     }
-    
 
     public synchronized void completeTrace() {
         PointF beginning = points.get(0);
@@ -74,23 +80,24 @@ public class FingerTrace {
         isCompleted = true;
         createRegionForContainsCheck();
     }
+
     public void cancelTrace() {
         isCanceled = true;
     }
 
     private boolean isPathIntersectingWithItself(float x, float y) {
 
-        float x1 = points.get(points.size()-1).x;
+        float x1 = points.get(points.size() - 1).x;
         float x2 = x;
-        float y1 = points.get(points.size()-1).y;
+        float y1 = points.get(points.size() - 1).y;
         float y2 = y;
 
-        for (int i = 1; i < points.size()-1; i++) {
-            float x3 = points.get(i-1).x;
+        for (int i = 1; i < points.size() - 1; i++) {
+            float x3 = points.get(i - 1).x;
             float x4 = points.get(i).x;
-            float y3 = points.get(i-1).y;
+            float y3 = points.get(i - 1).y;
             float y4 = points.get(i).y;
-            
+
             if (isIntersecting(x1, y1, x2, y2, x3, y3, x4, y4)) {
                 return true;
             }
@@ -165,20 +172,20 @@ public class FingerTrace {
     public boolean isCompleted() {
         return isCompleted;
     }
-    
+
     public static boolean isIntersecting(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
-     // Check if lines are parallel
-        
+        // Check if lines are parallel
+
         float denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-        if(denom == 0) { 
-         // Lines are parallel, this sucks...
+        if (denom == 0) {
+            // Lines are parallel, this sucks...
         }
 
         float a = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
         float b = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
 
         // Check for intersection
-        if( a >= 0.0f && a <= 1.0f && b >= 0.0f && b <= 1.0f) {
+        if (a >= 0.0f && a <= 1.0f && b >= 0.0f && b <= 1.0f) {
             return true;
         }
         return false;

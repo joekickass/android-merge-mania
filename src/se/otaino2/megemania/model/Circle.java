@@ -7,6 +7,14 @@ import java.util.concurrent.TimeUnit;
 
 import android.graphics.Paint;
 
+/**
+ * A circle represents a dot on the board. It keeps track of type (color), position, velocity, size, etc.
+ * 
+ * It also has a random functionality for changing its speed and direction.
+ * 
+ * @author otaino-2
+ *
+ */
 public class Circle {
     
     private static final float ORIG_SPEED = 50.0f;

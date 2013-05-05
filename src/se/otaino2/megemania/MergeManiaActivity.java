@@ -4,6 +4,12 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.TextView;
 
+/**
+ * The MergeManiaActivity creates the GameBoard.
+ * 
+ * @author otaino-2
+ *
+ */
 public class MergeManiaActivity extends Activity {
 
     private GameBoard board;

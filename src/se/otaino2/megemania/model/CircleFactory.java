@@ -5,6 +5,12 @@ import java.util.Random;
 import android.graphics.Color;
 import android.graphics.Paint;
 
+/**
+ * Creates a list of circles for the specified board of different types.
+ * 
+ * @author otaino-2
+ *
+ */
 public class CircleFactory {
     
     private static final float INITIAL_CIRCLE_RADIUS = 20.0f;

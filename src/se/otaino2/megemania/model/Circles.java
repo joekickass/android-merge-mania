@@ -5,6 +5,12 @@ import java.util.List;
 
 import android.util.SparseIntArray;
 
+/**
+ * A collection of circles
+ * 
+ * @author otaino-2
+ *
+ */
 public class Circles {
     
     private List<Circle> circles;

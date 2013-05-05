@@ -7,6 +7,12 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
+/**
+ * The first page shown to the user. Simply presents the user with the option to start a new game.
+ * 
+ * @author otaino-2
+ * 
+ */
 public class FirstPage extends Activity {
 
     @Override

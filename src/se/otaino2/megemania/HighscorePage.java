@@ -16,6 +16,12 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+/**
+ * The highscore page is shown when a game is won and displays the top 5 highscores.
+ * 
+ * @author otaino-2
+ *
+ */
 public class HighscorePage extends Activity {
 
     public static final String FINISH_TIME = "extra_finish_time";

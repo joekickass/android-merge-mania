@@ -27,6 +27,12 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.TextView;
 
+/**
+ * The GameBoard class is the heart of the application. It basically handles two tasks; multi-touch input and the game thread.
+ * 
+ * @author otaino-2
+ * 
+ */
 public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, OnTouchListener {
 
     private static final String TAG = "GameBoard";
@@ -52,8 +58,9 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
 
     @Override
     public void onWindowFocusChanged(boolean hasWindowFocus) {
-        if (!hasWindowFocus)
+        if (!hasWindowFocus) {
             thread.pause();
+        }
     }
 
     @Override
@@ -129,7 +136,7 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         labelView = statusLabel;
     }
 
-    // Static handler with a weak reference to the textview
+    // Static handler with a weak reference to the textview to avoid memory leaks
     static class LabelHandler extends Handler {
 
         private final WeakReference<TextView> labelRef;
@@ -148,9 +155,21 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
         }
     }
 
+    /**
+     * The GameThread runs a simple game loop:
+     * 
+     * loop:
+     *   updatePhysics()
+     *   doDraw()
+     * 
+     * Game entities and finger tracing is also handled in the game thread. Finally, the game thread also keeps track of the game state.
+     * 
+     * @author otaino-2
+     *
+     */
     class GameThread extends Thread {
 
-        //
+        // Number of balls when game starts
         private static final int NBR_OF_BALLS = 40;
 
         // State constants
@@ -257,7 +276,6 @@ public class GameBoard extends SurfaceView implements SurfaceHolder.Callback, On
                 if (state == STATE_RUNNING) {
 
                     startTime = getTimeNow();
-                    Log.d(TAG, "Starttime=" + startTime);
 
                     Message msg = handler.obtainMessage();
                     Bundle b = new Bundle();
